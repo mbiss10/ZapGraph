@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import zapgraph from "../ethereum/zapgraph";
 import provider from "../ethereum/provider";
 import logo from "../assets/zapGraph_Logo.png";
+import tb12Graphic from "../assets/TB12.jpg";
 let Zapgraph = zapgraph.connect(provider);
 
 class Autographs extends Component {
@@ -17,20 +18,16 @@ class Autographs extends Component {
       const signeeAddress = await signer.getAddress();
       const myFilter = Zapgraph.filters.Purchase(null, signeeAddress);
       const results = await Zapgraph.queryFilter(myFilter);
+      results.sort((a, b) => b.args._timestamp - a.args._timestamp);
       let autographs = [];
-      console.log(`Searching for ${signeeAddress}'s autographs...`);
       for (const info of Object.values(results)) {
-        let imageUrl = logo;
-        try {
-          const response = await fetch(
-            `https://ipfs.io/ipfs/QmPwvH9EKw4oxK7Xt2RxjCKabud88wUDJov5EyMMSL61gs/000000000000000000000000${info.args._signer
-              .slice(2)
-              .toLowerCase()}.json`
-          );
-          const jsonResponse = await response.json();
-          imageUrl = jsonResponse.image;
-        } catch (err) {
-          console.log(`No image found for autograph. Using default.`);
+        let imageUrl;
+        if (
+          info.args._signer === "0x6c626228EA18d5215655d6523213E1ffAb39eaeD"
+        ) {
+          imageUrl = logo;
+        } else {
+          imageUrl = tb12Graphic;
         }
         autographs.push({
           signer: info.args._signer,
@@ -44,7 +41,6 @@ class Autographs extends Component {
         autographs,
         loading: false,
       });
-      console.log(`Autograph search complete.`);
     } catch (err) {
       console.log(err);
     }

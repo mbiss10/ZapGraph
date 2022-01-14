@@ -49,7 +49,7 @@ class QrScan extends Component {
 
   onQrToggle(evt) {
     evt.preventDefault();
-    this.setState({ qrHidden: !this.state.qrHidden });
+    this.setState((prevState) => ({ qrHidden: !prevState.qrHidden }));
   }
 
   handleAddressInput(evt) {

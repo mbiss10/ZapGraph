@@ -30,15 +30,8 @@ describe("ZapGraph", function () {
       ["string", "uint", "string", "address"],
       ["timestamp:", timestamp, " signee:", signeeAddress]
     );
-
-    console.log("encodedData: ", encodedData);
     const hashedEncodedData = keccak256(encodedData);
-    console.log("hashedEncodedData: ", hashedEncodedData);
-
     const signature = await signer.signMessage(hashedEncodedData);
-    console.log("ethers signature: ", signature);
-
-    console.log("---- \n SOLIDITY");
     const res = await ZapGraph.connect(signee).verifySignature(
       timestamp,
       signerAddress,
@@ -89,7 +82,7 @@ describe("ZapGraph", function () {
     assert(allotment == 50);
   });
 
-  it("Should not verify a signature with an expired timestamp", async function () {
+  it("Should not mint an autograph with an expired timestamp", async function () {
     let timestamp = 100;
     const encodedData = ethers.utils.defaultAbiCoder.encode(
       ["string", "uint", "string", "address"],
@@ -119,6 +112,29 @@ describe("ZapGraph", function () {
     await ZapGraph.connect(signer).setPrice(ethers.utils.parseEther("1"));
     const newPrice = await ZapGraph.prices(signerAddress);
     assert(newPrice > startPrice);
+  });
+
+  it("Should not mint an autograph for less than the required price", async function () {
+    const encodedData = ethers.utils.defaultAbiCoder.encode(
+      ["string", "uint", "string", "address"],
+      ["timestamp:", timestamp, " signee:", signeeAddress]
+    );
+    const hashedEncodedData = keccak256(encodedData);
+    const signature = await signer.signMessage(hashedEncodedData);
+    await ZapGraph.connect(signer).setPrice(1000);
+    let err;
+    try {
+      await ZapGraph.connect(signee).purchase(
+        timestamp,
+        signerAddress,
+        signature,
+        "0x0"
+      );
+    } catch (_err) {
+      err = _err;
+    }
+
+    assert(err);
   });
 
   it("Should transfer funds to signer upon a valid purchase", async () => {
